@@ -35,3 +35,11 @@ def get_cv_by_id(db: Session, cv_id: uuid.UUID, user_id: uuid.UUID) -> Optional[
 def delete_cv_record(db: Session, cv: CV) -> None:
     db.delete(cv)
     db.commit()
+
+
+def update_cv_parsed_data(db: Session, cv: CV, parsed_data: Optional[dict], status: str) -> CV:
+    cv.parsed_data = parsed_data
+    cv.parse_status = status
+    db.commit()
+    db.refresh(cv)
+    return cv

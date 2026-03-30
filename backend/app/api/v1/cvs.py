@@ -5,7 +5,11 @@ from app.core.storage import save_upload_file, delete_file
 from app.api.v1.deps import get_current_user
 from app.models.user import User
 from app.schemas.cv import CVOut, CVListOut
-from app.services.cv_service import create_cv_record, get_cvs_by_user, get_cv_by_id, delete_cv_record
+from app.services.cv_service import (
+    create_cv_record, get_cvs_by_user, get_cv_by_id,
+    delete_cv_record, update_cv_parsed_data,
+)
+from app.services.cv_parser import parse_cv
 import uuid
 
 router = APIRouter()
@@ -26,9 +30,18 @@ async def upload_cv(
             file_path=file_path,
             file_type=file_type,
         )
-    except Exception as e:
+    except Exception:
         delete_file(file_path)
         raise HTTPException(status_code=500, detail="Failed to save CV record.")
+
+    # Parse immediately after upload
+    try:
+        parsed = parse_cv(file_path, file_type)
+        cv = update_cv_parsed_data(db, cv, parsed_data=parsed, status="done")
+    except Exception as e:
+        # Parsing failure is non-fatal — file is saved, status stays pending
+        update_cv_parsed_data(db, cv, parsed_data=None, status="failed")
+
     return cv
 
 
@@ -39,6 +52,18 @@ def list_cvs(
 ):
     cvs = get_cvs_by_user(db, current_user.id)
     return CVListOut(cvs=cvs, total=len(cvs))
+
+
+@router.get("/{cv_id}", response_model=CVOut)
+def get_cv(
+    cv_id: uuid.UUID,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    cv = get_cv_by_id(db, cv_id, current_user.id)
+    if not cv:
+        raise HTTPException(status_code=404, detail="CV not found.")
+    return cv
 
 
 @router.delete("/{cv_id}", status_code=status.HTTP_204_NO_CONTENT)
