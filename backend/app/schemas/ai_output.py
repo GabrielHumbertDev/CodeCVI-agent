@@ -38,6 +38,13 @@ class TailoredCVOutput(BaseModel):
     email: str = ""
     phone: str = ""
     summary: str = ""
+
+    @field_validator("email", "phone", "summary", mode="before")
+    @classmethod
+    def coerce_none_to_str(cls, v: object) -> str:
+        if v is None:
+            return ""
+        return str(v)
     skills: list[str] = []
     experience: list[ExperienceItem] = []
     education: list[EducationItem] = []
