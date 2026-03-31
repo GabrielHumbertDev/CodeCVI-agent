@@ -1,8 +1,12 @@
 import json
 import re
 from typing import Optional
-from app.services.ai_client import call_ai
+from pydantic import ValidationError
 
+from app.services.ai_client import call_ai
+from app.schemas.ai_output import TailoredCVOutput
+
+MAX_TAILOR_RETRIES = 2
 
 # ---------------------------------------------------------------------------
 # Prompt builder
@@ -19,8 +23,9 @@ STRICT RULES:
 """
 
 
-def build_prompt(cv_data: dict, job_description: str) -> str:
+def build_prompt(cv_data: dict, job_description: str, retry_note: str = "") -> str:
     cv_json = json.dumps(cv_data, indent=2)
+    note = f"\n\nIMPORTANT: {retry_note}" if retry_note else ""
     return f"""Below is the original CV data and a job description.
 Tailor the CV to better match the job description.
 Only rephrase existing content - do not add anything new.
@@ -32,7 +37,7 @@ JOB DESCRIPTION:
 {job_description}
 
 Return the tailored CV as valid JSON with the same structure as the original CV data.
-Do not wrap in markdown. Return raw JSON only."""
+Do not wrap in markdown. Return raw JSON only.{note}"""
 
 
 # ---------------------------------------------------------------------------
@@ -94,33 +99,76 @@ def _flatten_text(data: dict) -> str:
 
 
 # ---------------------------------------------------------------------------
+# Output validator (schema)
+# ---------------------------------------------------------------------------
+
+def _parse_and_validate(raw_response: str) -> dict:
+    """
+    Extract JSON from raw AI response, parse it, and validate against
+    TailoredCVOutput schema. Raises ValueError on any failure.
+    """
+    json_text = _extract_json(raw_response)
+
+    try:
+        data = json.loads(json_text)
+    except json.JSONDecodeError as e:
+        raise ValueError(f"AI returned invalid JSON: {e}\nRaw: {raw_response[:300]}")
+
+    if not isinstance(data, dict):
+        raise ValueError(f"AI returned {type(data).__name__} instead of a JSON object")
+
+    try:
+        validated = TailoredCVOutput(**data)
+    except ValidationError as e:
+        # Summarise the first few errors
+        errors = "; ".join(
+            f"{'.'.join(str(loc) for loc in err['loc'])}: {err['msg']}"
+            for err in e.errors()[:3]
+        )
+        raise ValueError(f"AI output failed schema validation: {errors}")
+
+    return validated.model_dump()
+
+
+def _extract_json(text: str) -> str:
+    """Strip markdown code fences if the AI wrapped the JSON."""
+    text = re.sub(r"```(?:json)?\s*", "", text)
+    text = re.sub(r"```", "", text)
+    return text.strip()
+
+
+# ---------------------------------------------------------------------------
 # Main tailor function
 # ---------------------------------------------------------------------------
 
 async def tailor_cv(cv_data: dict, job_description: str) -> tuple[dict, bool, list[str]]:
     """
-    Call AI to tailor the CV, then validate the output.
+    Call AI to tailor the CV, validate the schema, then truth-check the output.
+    Retries up to MAX_TAILOR_RETRIES times if the AI returns malformed output.
     Returns (tailored_data, validation_passed, violations).
     """
-    prompt = build_prompt(cv_data, job_description)
-    raw_response = await call_ai(prompt, SYSTEM_PROMPT)
+    last_error: Optional[str] = None
+    retry_note = ""
 
-    # Extract JSON from response (strip markdown if present)
-    json_text = _extract_json(raw_response)
+    for attempt in range(1, MAX_TAILOR_RETRIES + 2):  # +2 so range covers retries
+        prompt = build_prompt(cv_data, job_description, retry_note)
+        raw_response = await call_ai(prompt, SYSTEM_PROMPT)
 
-    try:
-        tailored = json.loads(json_text)
-    except json.JSONDecodeError as e:
-        raise ValueError(f"AI returned invalid JSON: {e}\nRaw response: {raw_response[:500]}")
+        try:
+            tailored = _parse_and_validate(raw_response)
+        except ValueError as e:
+            last_error = str(e)
+            retry_note = (
+                f"Your previous response failed validation: {last_error}. "
+                "Return ONLY a raw JSON object with fields: name, email, phone, summary, skills, experience, education."
+            )
+            if attempt <= MAX_TAILOR_RETRIES:
+                continue  # retry
+            raise ValueError(f"AI output invalid after {MAX_TAILOR_RETRIES + 1} attempts: {last_error}")
 
-    is_valid, violations = validate_tailored_cv(cv_data, tailored)
+        # Schema validation passed — now truth-check
+        is_valid, violations = validate_tailored_cv(cv_data, tailored)
+        return tailored, is_valid, violations
 
-    return tailored, is_valid, violations
-
-
-def _extract_json(text: str) -> str:
-    """Strip markdown code fences if the AI wrapped the JSON."""
-    # Remove ```json ... ``` or ``` ... ```
-    text = re.sub(r"```(?:json)?\s*", "", text)
-    text = re.sub(r"```", "", text)
-    return text.strip()
+    # Should not reach here
+    raise ValueError(f"AI output invalid after {MAX_TAILOR_RETRIES + 1} attempts: {last_error}")
