@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.api.v1.deps import get_current_user
 from app.models.user import User
-from app.schemas.match import MatchRequest, MatchResult
+from app.schemas.match import MatchRequest, MatchReport
 from app.services.cv_service import get_cv_by_id
 from app.services.job_service import get_job_by_id
 from app.services.match_engine import score_match
@@ -11,7 +11,7 @@ from app.services.match_engine import score_match
 router = APIRouter()
 
 
-@router.post("", response_model=MatchResult)
+@router.post("", response_model=MatchReport)
 def match_cv_to_job(
     payload: MatchRequest,
     db: Session = Depends(get_db),
@@ -33,7 +33,7 @@ def match_cv_to_job(
 
     result = score_match(cv.parsed_data, job.description)
 
-    return MatchResult(
+    return MatchReport(
         cv_id=payload.cv_id,
         job_id=payload.job_id,
         **result,
