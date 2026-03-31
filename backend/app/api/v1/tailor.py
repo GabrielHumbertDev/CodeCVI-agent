@@ -8,6 +8,7 @@ from app.services.cv_service import get_cv_by_id
 from app.services.job_service import get_job_by_id
 from app.services.cv_tailor import tailor_cv
 from app.services.cv_version_service import create_cv_version, get_versions_by_cv
+from app.services.audit_service import log_action
 import uuid
 
 router = APIRouter()
@@ -46,6 +47,8 @@ async def tailor_cv_endpoint(
         validation_passed=validation_passed,
     )
 
+    log_action(db, current_user.id, "cv.tailor", "cv_version", str(version.id),
+               {"cv_id": str(cv.id), "job_id": str(job.id), "validation_passed": validation_passed})
     return version
 
 

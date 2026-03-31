@@ -10,6 +10,7 @@ from app.services.cv_service import (
     delete_cv_record, update_cv_parsed_data,
 )
 from app.services.cv_parser import parse_cv
+from app.services.audit_service import log_action
 import uuid
 
 router = APIRouter()
@@ -42,6 +43,7 @@ async def upload_cv(
         # Parsing failure is non-fatal — file is saved, status stays pending
         update_cv_parsed_data(db, cv, parsed_data=None, status="failed")
 
+    log_action(db, current_user.id, "cv.upload", "cv", str(cv.id), {"filename": filename})
     return cv
 
 
@@ -75,5 +77,6 @@ def delete_cv(
     cv = get_cv_by_id(db, cv_id, current_user.id)
     if not cv:
         raise HTTPException(status_code=404, detail="CV not found.")
+    log_action(db, current_user.id, "cv.delete", "cv", str(cv_id))
     delete_file(cv.file_path)
     delete_cv_record(db, cv)
