@@ -1,12 +1,14 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 from typing import Optional
+from datetime import datetime
 import uuid
 
 from app.core.database import get_db
 from app.api.v1.deps import get_current_user
 from app.models.user import User
 from app.schemas.application import ApplicationCreate, ApplicationUpdate, ApplicationOut
+from app.schemas.readiness import ReadinessReport
 from app.services.application_service import (
     create_application,
     get_applications,
@@ -16,6 +18,7 @@ from app.services.application_service import (
 )
 from app.services.job_service import get_job_by_id
 from app.services.cv_version_service import get_version_by_id
+from app.services.readiness_service import build_readiness_report
 
 router = APIRouter()
 
@@ -96,3 +99,39 @@ def delete_application_endpoint(
     if not app:
         raise HTTPException(status_code=404, detail="Application not found.")
     delete_application(db, app)
+
+
+@router.get("/{application_id}/readiness", response_model=ReadinessReport)
+def get_readiness(
+    application_id: uuid.UUID,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    app = get_application_by_id(db, application_id, current_user.id)
+    if not app:
+        raise HTTPException(status_code=404, detail="Application not found.")
+    report = build_readiness_report(db, app, current_user.id)
+    return ReadinessReport(**report)
+
+
+@router.post("/{application_id}/apply", response_model=ApplicationOut)
+def confirm_apply(
+    application_id: uuid.UUID,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    app = get_application_by_id(db, application_id, current_user.id)
+    if not app:
+        raise HTTPException(status_code=404, detail="Application not found.")
+    if app.status not in ("draft",):
+        raise HTTPException(
+            status_code=400,
+            detail=f"Application is already in '{app.status}' status and cannot be re-applied.",
+        )
+    return update_application(
+        db=db,
+        application=app,
+        status="applied",
+        notes=app.notes,
+        applied_at=datetime.utcnow(),
+    )
