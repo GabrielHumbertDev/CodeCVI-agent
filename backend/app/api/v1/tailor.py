@@ -59,3 +59,19 @@ def list_cv_versions(
     if not cv:
         raise HTTPException(status_code=404, detail="CV not found.")
     return get_versions_by_cv(db, cv_id)
+
+
+@router.get("/versions/{version_id}", response_model=CVVersionOut)
+def get_cv_version(
+    version_id: uuid.UUID,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    version = get_version_by_id(db, version_id)
+    if not version:
+        raise HTTPException(status_code=404, detail="CV version not found.")
+    # Ensure version belongs to the current user via the parent CV
+    cv = get_cv_by_id(db, version.cv_id, current_user.id)
+    if not cv:
+        raise HTTPException(status_code=404, detail="CV version not found.")
+    return version
