@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-from app.api.v1 import health, auth, cvs, jobs, match, tailor, cover_letters, applications, export, search
+from app.api.v1 import health, auth, cvs, jobs, match, tailor, cover_letters, applications, export, search, apply
 
 api_router = APIRouter()
 
@@ -13,3 +13,4 @@ api_router.include_router(cover_letters.router, prefix="/cover-letters", tags=["
 api_router.include_router(applications.router, prefix="/applications", tags=["applications"])
 api_router.include_router(export.router, prefix="/export", tags=["export"])
 api_router.include_router(search.router, prefix="/search", tags=["search"])
+api_router.include_router(apply.router, prefix="/apply", tags=["apply"])
