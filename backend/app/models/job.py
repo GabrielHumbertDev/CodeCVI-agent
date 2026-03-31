@@ -15,6 +15,7 @@ class Job(Base):
     company = Column(String(255), nullable=True)
     description = Column(Text, nullable=False)
     extracted_keywords = Column(JSONB, nullable=True)
+    embedding = Column(JSONB, nullable=True)   # float list from nomic-embed-text
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
 
     user = relationship("User", back_populates="jobs")

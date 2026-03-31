@@ -21,6 +21,10 @@ class Settings(BaseSettings):
     ollama_url: str = "http://localhost:11434"
     anthropic_api_key: str = ""
 
+    # Embeddings
+    embedding_model: str = "nomic-embed-text"
+    embedding_dim: int = 768
+
     # App
     app_name: str = "CV Platform API"
     debug: bool = False

@@ -4,6 +4,7 @@ from sqlalchemy.orm import relationship
 from datetime import datetime
 import uuid
 from app.models.base import Base
+from sqlalchemy import JSON
 
 
 class CV(Base):
@@ -16,6 +17,7 @@ class CV(Base):
     file_type = Column(String(10), nullable=False)  # pdf or docx
     parsed_data = Column(JSONB, nullable=True)       # structured CV JSON
     parse_status = Column(String(20), default="pending", nullable=False)  # pending, done, failed
+    embedding = Column(JSONB, nullable=True)   # float list from nomic-embed-text
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
 
     user = relationship("User", back_populates="cvs")
