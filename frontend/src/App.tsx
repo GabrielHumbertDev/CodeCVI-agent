@@ -5,6 +5,7 @@ import AdminRoute from "./components/AdminRoute";
 import Navbar from "./components/Navbar";
 
 import Admin from "./pages/Admin";
+import AccountStatus from "./pages/AccountStatus";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
@@ -29,6 +30,7 @@ function App() {
             <Routes>
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
+              <Route path="/account-status" element={<AccountStatus />} />
               <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
               <Route path="/cvs" element={<ProtectedRoute><CVs /></ProtectedRoute>} />
               <Route path="/jobs" element={<ProtectedRoute><Jobs /></ProtectedRoute>} />
