@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { login } from "../api/auth";
+import { login, getMe } from "../api/auth";
 import { useAuth } from "../components/AuthContext";
 
 const Login = () => {
-  const { saveToken } = useAuth();
+  const { saveToken, saveUser } = useAuth();
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -18,6 +18,9 @@ const Login = () => {
     try {
       const data = await login(email, password);
       saveToken(data.access_token);
+      // Fetch user profile so we know their role immediately
+      const me = await getMe();
+      saveUser(me);
       navigate("/");
     } catch (err: any) {
       setError(err.response?.data?.detail || "Login failed.");

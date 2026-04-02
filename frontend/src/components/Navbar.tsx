@@ -1,7 +1,7 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "./AuthContext";
 
-const NAV_LINKS = [
+const USER_LINKS = [
   { to: "/", label: "Dashboard" },
   { to: "/cvs", label: "CVs" },
   { to: "/jobs", label: "Jobs" },
@@ -16,7 +16,7 @@ const NAV_LINKS = [
 ];
 
 const Navbar = () => {
-  const { token, logout } = useAuth();
+  const { token, isAdmin, user, logout } = useAuth();
   const navigate = useNavigate();
 
   const handleLogout = () => {
@@ -32,7 +32,7 @@ const Navbar = () => {
         </Link>
         {token && (
           <div className="flex items-center gap-1 overflow-x-auto text-xs font-medium text-gray-600 flex-1 mx-4">
-            {NAV_LINKS.map((link) => (
+            {USER_LINKS.map((link) => (
               <Link
                 key={link.to}
                 to={link.to}
@@ -41,15 +41,31 @@ const Navbar = () => {
                 {link.label}
               </Link>
             ))}
+            {isAdmin && (
+              <Link
+                to="/admin"
+                className="hover:text-purple-600 transition-colors whitespace-nowrap px-2 py-1 rounded hover:bg-purple-50 text-purple-600 font-semibold"
+              >
+                Admin
+              </Link>
+            )}
           </div>
         )}
-        {token ? (
-          <button onClick={handleLogout} className="text-xs text-gray-500 hover:text-red-600 shrink-0">
-            Logout
-          </button>
-        ) : (
-          <Link to="/login" className="text-xs text-blue-600 font-medium">Sign in</Link>
-        )}
+        <div className="flex items-center gap-3 shrink-0">
+          {token && user && (
+            <span className="text-xs text-gray-400 hidden md:block">
+              {user.full_name ?? user.email}
+              {isAdmin && <span className="ml-1 text-purple-500">(admin)</span>}
+            </span>
+          )}
+          {token ? (
+            <button onClick={handleLogout} className="text-xs text-gray-500 hover:text-red-600">
+              Logout
+            </button>
+          ) : (
+            <Link to="/login" className="text-xs text-blue-600 font-medium">Sign in</Link>
+          )}
+        </div>
       </div>
     </nav>
   );
