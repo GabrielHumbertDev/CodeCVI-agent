@@ -9,6 +9,7 @@ import AccountStatus from "./pages/AccountStatus";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
+import ApplicationBuilder from "./pages/ApplicationBuilder";
 import CVs from "./pages/CVs";
 import Jobs from "./pages/Jobs";
 import Match from "./pages/Match";
@@ -32,6 +33,7 @@ function App() {
               <Route path="/register" element={<Register />} />
               <Route path="/account-status" element={<AccountStatus />} />
               <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+              <Route path="/workflow" element={<ProtectedRoute><ApplicationBuilder /></ProtectedRoute>} />
               <Route path="/cvs" element={<ProtectedRoute><CVs /></ProtectedRoute>} />
               <Route path="/jobs" element={<ProtectedRoute><Jobs /></ProtectedRoute>} />
               <Route path="/match" element={<ProtectedRoute><Match /></ProtectedRoute>} />

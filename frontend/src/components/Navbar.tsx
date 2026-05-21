@@ -3,6 +3,7 @@ import { useAuth } from "./AuthContext";
 
 const USER_LINKS = [
   { to: "/", label: "Dashboard" },
+  { to: "/workflow", label: "Workflow" },
   { to: "/cvs", label: "CVs" },
   { to: "/jobs", label: "Jobs" },
   { to: "/match", label: "Match" },
