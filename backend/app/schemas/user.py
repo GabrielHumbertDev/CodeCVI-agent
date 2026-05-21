@@ -63,6 +63,7 @@ class AdminUserEdit(BaseModel):
     full_name: Optional[str] = None
     email: Optional[EmailStr] = None
     role: Optional[str] = None
+    new_password: Optional[str] = None
 
 
 class AdminPauseRequest(BaseModel):

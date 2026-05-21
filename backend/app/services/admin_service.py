@@ -116,6 +116,7 @@ def edit_user(
     full_name: Optional[str] = None,
     email: Optional[str] = None,
     role: Optional[str] = None,
+    new_password: Optional[str] = None,
 ) -> User:
     if full_name is not None:
         target.full_name = full_name
@@ -125,6 +126,10 @@ def edit_user(
         if role not in (UserRole.USER, UserRole.ADMIN):
             raise ValueError(f"Invalid role '{role}'.")
         target.role = role
+    if new_password is not None:
+        if len(new_password) < 8:
+            raise ValueError("Password must be at least 8 characters.")
+        target.hashed_password = hash_password(new_password)
     target.updated_at = datetime.utcnow()
     db.commit()
     db.refresh(target)

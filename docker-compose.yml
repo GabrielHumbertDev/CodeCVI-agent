@@ -1,6 +1,8 @@
 version: "3.9"
 
 services:
+  # ─── Infrastructure ──────────────────────────────────────────────────────────
+
   db:
     image: postgres:15
     container_name: cv_platform_db
@@ -9,7 +11,7 @@ services:
       POSTGRES_PASSWORD: cvpassword
       POSTGRES_DB: cv_platform
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -28,6 +30,57 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+
+  # ─── AI Service ──────────────────────────────────────────────────────────────
+
+  ai_service:
+    build: ./ai_service
+    container_name: cv_platform_ai
+    ports:
+      - "8001:8001"
+    environment:
+      # Points to Ollama running on your host machine
+      OLLAMA_URL: http://host.docker.internal:11434
+      OLLAMA_MODEL: qwen2.5:7b
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  # ─── Backend API ─────────────────────────────────────────────────────────────
+
+  backend:
+    build: ./backend
+    container_name: cv_platform_backend
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: postgresql://cvuser:cvpassword@db:5432/cv_platform
+      REDIS_URL: redis://redis:6379/0
+      SECRET_KEY: change-me-before-deploy-use-openssl-rand-hex-32
+      AI_SERVICE_URL: http://ai_service:8001
+      AI_PROVIDER: local
+      OLLAMA_URL: http://host.docker.internal:11434
+      OLLAMA_MODEL: qwen2.5:7b
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      ai_service:
+        condition: service_started
+    volumes:
+      - ./backend/uploads:/app/uploads
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  # ─── Frontend ─────────────────────────────────────────────────────────────────
+
+  frontend:
+    build: ./frontend
+    container_name: cv_platform_frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
 
 volumes:
   postgres_data:

@@ -42,7 +42,7 @@ const Admin = () => {
   const [pauseReason, setPauseReason] = useState("");
   const [pausingId, setPausingId] = useState<string | null>(null);
   const [editingUser, setEditingUser] = useState<any | null>(null);
-  const [editForm, setEditForm] = useState({ full_name: "", email: "", role: "" });
+  const [editForm, setEditForm] = useState({ full_name: "", email: "", role: "", new_password: "" });
 
   const load = async () => {
     setLoading(true);
@@ -85,12 +85,14 @@ const Admin = () => {
 
   const openEdit = (user: any) => {
     setEditingUser(user);
-    setEditForm({ full_name: user.full_name ?? "", email: user.email, role: user.role });
+    setEditForm({ full_name: user.full_name ?? "", email: user.email, role: user.role, new_password: "" });
   };
 
   const handleEdit = async () => {
     if (!editingUser) return;
-    await action(() => editUser(editingUser.id, editForm));
+    const payload: any = { full_name: editForm.full_name, email: editForm.email, role: editForm.role };
+    if (editForm.new_password) payload.new_password = editForm.new_password;
+    await action(() => editUser(editingUser.id, payload));
     setEditingUser(null);
   };
 
@@ -241,6 +243,16 @@ const Admin = () => {
                 <option value="user">user</option>
                 <option value="admin">admin</option>
               </select>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1">New Password <span className="text-gray-400 font-normal">(leave blank to keep current)</span></label>
+              <input
+                type="password"
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                placeholder="Min. 8 characters"
+                value={editForm.new_password}
+                onChange={(e) => setEditForm({ ...editForm, new_password: e.target.value })}
+              />
             </div>
             <div className="flex gap-2 justify-end">
               <button onClick={() => setEditingUser(null)} className="text-sm px-4 py-2 rounded-lg bg-gray-100 hover:bg-gray-200">Cancel</button>

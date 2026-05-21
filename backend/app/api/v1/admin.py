@@ -72,9 +72,10 @@ def edit_user(
         full_name=payload.full_name,
         email=str(payload.email) if payload.email else None,
         role=payload.role,
+        new_password=payload.new_password,
     )
     log_action(db, admin.id, "admin.user.edit", "user", str(user_id),
-               {"changed_by": str(admin.id)})
+               {"changed_by": str(admin.id), "password_reset": payload.new_password is not None})
     return updated
 
 
