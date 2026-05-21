@@ -28,6 +28,7 @@ class Settings(BaseSettings):
     # App
     app_name: str = "CV Platform API"
     debug: bool = False
+    backend_cors_origins: str = "http://localhost:3000"
 
     class Config:
         env_file = "../.env"
