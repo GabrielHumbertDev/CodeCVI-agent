@@ -19,6 +19,7 @@ import Applications from "./pages/Applications";
 import Search from "./pages/Search";
 import Coaching from "./pages/Coaching";
 import Analytics from "./pages/Analytics";
+import History from "./pages/History";
 import GDPR from "./pages/GDPR";
 
 function App() {
@@ -42,6 +43,7 @@ function App() {
               <Route path="/applications" element={<ProtectedRoute><Applications /></ProtectedRoute>} />
               <Route path="/search" element={<ProtectedRoute><Search /></ProtectedRoute>} />
               <Route path="/coaching" element={<ProtectedRoute><Coaching /></ProtectedRoute>} />
+              <Route path="/history" element={<ProtectedRoute><History /></ProtectedRoute>} />
               <Route path="/analytics" element={<ProtectedRoute><Analytics /></ProtectedRoute>} />
               <Route path="/gdpr" element={<ProtectedRoute><GDPR /></ProtectedRoute>} />
               <Route path="/admin" element={<AdminRoute><Admin /></AdminRoute>} />

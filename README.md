@@ -54,6 +54,20 @@ It walks the user through:
 6. Generating a tailored cover letter
 7. Downloading the tailored CV as DOCX/PDF
 
+The primary navigation is intentionally focused:
+
+- Dashboard
+- Workflow
+- CVs
+- Jobs
+- Applications
+- Search
+- History
+- Analytics
+- Privacy
+
+The older standalone tools for match scoring, tailoring, cover letters, and coaching are still available as direct routes from the History page under "Advanced direct tools". They are kept for testing and fallback while the Workflow page becomes the main user journey.
+
 ## Running The App With Docker
 
 ### Prerequisites

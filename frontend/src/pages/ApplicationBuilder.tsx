@@ -5,6 +5,7 @@ import { scoreMatch } from "../api/match";
 import { tailorCV } from "../api/tailor";
 import { generateCoverLetter } from "../api/coverLetters";
 import { downloadDocx, downloadPdf } from "../api/export";
+import { getCoaching } from "../api/analytics";
 
 const gradeColor: Record<string, string> = {
   Excellent: "text-green-600",
@@ -90,6 +91,7 @@ const ApplicationBuilder = () => {
   const [report, setReport] = useState<any>(null);
   const [tailoredVersion, setTailoredVersion] = useState<any>(null);
   const [coverLetter, setCoverLetter] = useState<any>(null);
+  const [coaching, setCoaching] = useState<any>(null);
   const [busy, setBusy] = useState("");
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
@@ -117,6 +119,7 @@ const ApplicationBuilder = () => {
     setReport(null);
     setTailoredVersion(null);
     setCoverLetter(null);
+    setCoaching(null);
     setNotice("");
   };
 
@@ -136,6 +139,19 @@ const ApplicationBuilder = () => {
     } finally {
       setBusy("");
       if (fileRef.current) fileRef.current.value = "";
+    }
+  };
+
+  const handleCoaching = async () => {
+    setBusy("coaching");
+    setError("");
+    setCoaching(null);
+    try {
+      setCoaching(await getCoaching(cvId, jobId));
+    } catch (err: any) {
+      setError(err.response?.data?.detail || "Could not generate coaching tips.");
+    } finally {
+      setBusy("");
     }
   };
 
@@ -401,6 +417,50 @@ const ApplicationBuilder = () => {
             )}
           </div>
         </div>
+      </section>
+
+      <section className="bg-white border border-gray-100 shadow-sm rounded-lg p-5 space-y-4">
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <div>
+            <h2 className="text-lg font-semibold text-gray-800">Advanced coaching</h2>
+            <p className="text-sm text-gray-500">Get more detailed suggestions for closing the strongest CV-to-job gaps.</p>
+          </div>
+          <button
+            onClick={handleCoaching}
+            disabled={!canScore || busy === "coaching"}
+            className="bg-gray-900 text-white text-sm font-medium px-4 py-2 rounded-md hover:bg-gray-800 disabled:opacity-50"
+          >
+            {busy === "coaching" ? "Analysing..." : "Get coaching tips"}
+          </button>
+        </div>
+
+        {coaching ? (
+          <div className="space-y-4">
+            <div className="border border-gray-100 rounded-lg p-4">
+              <div className="flex items-baseline gap-3">
+                <span className="text-3xl font-bold text-gray-900">{coaching.overall_score}%</span>
+                <span className="text-sm font-semibold text-gray-500">{coaching.grade}</span>
+              </div>
+              <p className="text-sm text-gray-600 mt-2">{coaching.headline}</p>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {(coaching.tips ?? []).map((tip: any, index: number) => (
+                <div key={`${tip.category}-${tip.gap}-${index}`} className="border border-gray-100 rounded-lg p-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${tip.priority === "high" ? "bg-red-100 text-red-700" : "bg-yellow-100 text-yellow-700"}`}>
+                      {tip.priority}
+                    </span>
+                    <span className="text-xs text-gray-400 capitalize">{tip.category}</span>
+                  </div>
+                  <p className="text-sm font-medium text-gray-800">{tip.gap}</p>
+                  <p className="text-sm text-gray-600 mt-1">{tip.tip}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <p className="text-sm text-gray-400">Run coaching after selecting a parsed CV and saved job.</p>
+        )}
       </section>
 
       <section className="bg-white border border-gray-100 shadow-sm rounded-lg p-5 space-y-4">

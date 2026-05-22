@@ -6,12 +6,9 @@ const USER_LINKS = [
   { to: "/workflow", label: "Workflow" },
   { to: "/cvs", label: "CVs" },
   { to: "/jobs", label: "Jobs" },
-  { to: "/match", label: "Match" },
-  { to: "/tailor", label: "Tailor" },
-  { to: "/cover-letters", label: "Cover Letters" },
   { to: "/applications", label: "Applications" },
   { to: "/search", label: "Search" },
-  { to: "/coaching", label: "Coaching" },
+  { to: "/history", label: "History" },
   { to: "/analytics", label: "Analytics" },
   { to: "/gdpr", label: "Privacy" },
 ];
